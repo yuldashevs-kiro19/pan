@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DarkWare — Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#07070b;--card:#0e0e14;--border:rgba(255,255,255,.06);--text:#fff;--muted:rgba(255,255,255,.4);--accent:#00e5ff;--accent2:#0066ff;--danger:#ff5252;--success:#4caf50;--warning:#ffab00;--purple:#7c4dff}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh}
+.app{display:flex;height:100vh}
+.sidebar{width:260px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;position:relative}
+.sidebar::after{content:'';position:absolute;top:0;right:0;bottom:0;width:1px;background:linear-gradient(to bottom,transparent,var(--accent),transparent);opacity:.2}
+.sb-logo{padding:28px 24px;border-bottom:1px solid var(--border)}
+.sb-logo h1{font-size:18px;font-weight:700;letter-spacing:2px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sb-logo span{font-size:10px;color:var(--muted);display:block;margin-top:4px;letter-spacing:1px}
+.sb-nav{flex:1;padding:16px 12px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;color:var(--muted);cursor:pointer;transition:all .15s;font-size:13px;font-weight:500;margin-bottom:4px;text-decoration:none}
+.nav-item:hover{background:rgba(255,255,255,.03);color:var(--text)}
+.nav-item.active{background:rgba(0,229,255,.06);color:var(--accent);box-shadow:inset 0 0 0 1px rgba(0,229,255,.1)}
+.nav-icon{width:20px;text-align:center;font-size:15px}
+.sb-footer{padding:16px;border-top:1px solid var(--border)}
+.btn-logout{width:100%;padding:10px;background:rgba(255,82,82,.06);border:1px solid rgba(255,82,82,.15);border-radius:8px;color:var(--danger);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s}
+.btn-logout:hover{background:rgba(255,82,82,.12)}
+</style>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+<div class="sb-logo"><h1>DARKWARE</h1><span>Admin Panel v2.0</span></div>
+<nav class="sb-nav">
+<a class="nav-item active" data-p="dash"><span class="nav-icon">◈</span>Dashboard</a>
+<a class="nav-item" data-p="keys"><span class="nav-icon">⚿</span>Keys</a>
+<a class="nav-item" data-p="users"><span class="nav-icon">◉</span>Users</a>
+<a class="nav-item" data-p="hwid"><span class="nav-icon">⬡</span>HWID</a>
+<a class="nav-item" data-p="logs"><span class="nav-icon">▤</span>Logs</a>
+<a class="nav-item" data-p="settings"><span class="nav-icon">⚙</span>Settings</a>
+</nav>
+<div class="sb-footer"><button class="btn-logout" id="logout">⏻ Logout</button></div>
+</aside>
+<main class="main" id="main"></main>
+</div>
+<script src="assets/js/panel.js"></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DarkWare — Auth</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#07070b;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.bg{position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,255,.015) 1px,transparent 1px);background-size:50px 50px;pointer-events:none}
+.glow{position:fixed;width:500px;height:500px;border-radius:50%;filter:blur(140px);opacity:.1;pointer-events:none}
+.g1{top:-200px;left:-100px;background:#00e5ff}
+.g2{bottom:-200px;right:-100px;background:#7c4dff}
+.card{position:relative;background:rgba(14,14,20,.92);border:1px solid rgba(255,255,255,.06);backdrop-filter:blur(20px);padding:48px 40px;width:400px;max-width:92vw;border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.card::before{content:'';position:absolute;inset:-1px;border-radius:20px;padding:1px;background:linear-gradient(135deg,rgba(0,255,255,.15),transparent 50%,rgba(124,77,255,.15));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.logo{text-align:center;margin-bottom:32px}
+.logo-mark{width:52px;height:52px;margin:0 auto 14px;border-radius:14px;background:linear-gradient(135deg,#00e5ff,#0066ff);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 25px rgba(0,229,255,.25)}
+.logo-mark span{font-size:22px;font-weight:700;color:#07070b}
+.logo h1{font-size:22px;font-weight:600;letter-spacing:3px;color:#fff}
+.logo p{font-size:12px;color:rgba(255,255,255,.35);margin-top:4px;letter-spacing:1px}
+.form-group{margin-bottom:20px}
+.form-group label{display:block;font-size:12px;font-weight:500;color:rgba(255,255,255,.4);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase}
+.form-group input{width:100%;padding:14px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:#fff;font-size:14px;outline:none;transition:all .2s}
+.form-group input:focus{border-color:rgba(0,229,255,.4);background:rgba(0,229,255,.03);box-shadow:0 0 0 3px rgba(0,229,255,.08)}
+.form-group input::placeholder{color:rgba(255,255,255,.2)}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.5px}
+.btn-primary{background:linear-gradient(135deg,#00e5ff,#0066ff);color:#07070b;box-shadow:0 4px 20px rgba(0,229,255,.25)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(0,229,255,.35)}
+.btn-primary:active{transform:translateY(0)}
+.error{background:rgba(255,50,50,.08);border:1px solid rgba(255,50,50,.2);color:#ff5252;padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:20px;display:none;animation:shake .4s}
+.error.show{display:block}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.footer{text-align:center;margin-top:24px;font-size:11px;color:rgba(255,255,255,.2)}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="glow g1"></div>
+<div class="glow g2"></div>
+
+<div class="card">
+    <div class="logo">
+        <div class="logo-mark"><span>DW</span></div>
+        <h1>DARKWARE</h1>
+        <p>Admin Panel</p>
+    </div>
+    
+    <div id="error" class="error"></div>
+    
+    <form id="form">
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="user" placeholder="Enter username" required>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="pass" placeholder="Enter password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Sign In</button>
+    </form>
+    
+    <div class="footer">Secured Access Only</div>
+</div>
+
+<script>
+const ADMIN_USER = 'admin';
+const DEFAULT_PASS = 'admin123';
+const API_URL = localStorage.getItem('dw_api_url') || '';
+
+if(localStorage.getItem('dw_auth') === 'true') {
+    window.location.href = 'index.html';
+}
+
+document.getElementById('form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const u = document.getElementById('user').value;
+    const p = document.getElementById('pass').value;
+
+    // Try cloud auth first if API is configured
+    if(API_URL) {
+        try {
+            const res = await fetch(API_URL + '/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
+            const data = await res.json();
+            if(res.ok && data.token) {
+                localStorage.setItem('dw_auth', 'true');
+                localStorage.setItem('dw_user', u);
+                localStorage.setItem('dw_token', data.token);
+                window.location.href = 'index.html';
+                return;
+            }
+            showErr(data.error || 'Auth failed');
+            return;
+        } catch(e) {
+            // Fall through to local auth
+        }
+    }
+
+    // Local auth
+    const storedPass = localStorage.getItem('dw_pass') || DEFAULT_PASS;
+    if(u === ADMIN_USER && p === storedPass) {
+        localStorage.setItem('dw_auth', 'true');
+        localStorage.setItem('dw_user', u);
+        window.location.href = 'index.html';
+    } else {
+        showErr('Invalid credentials');
+    }
+});
+
+function showErr(msg) {
+    const err = document.getElementById('error');
+    err.textContent = msg;
+    err.classList.add('show');
+    setTimeout(() => err.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
