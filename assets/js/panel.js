@@ -113,6 +113,7 @@ function render() {
         case 'keys': renderKeys(); break;
         case 'users': renderUsers(); break;
         case 'hwid': renderHWID(); break;
+        case 'files': renderFiles(); break;
         case 'logs': renderLogs(); break;
         case 'settings': renderSettings(); break;
     }
@@ -288,6 +289,116 @@ function deleteKey(id) {
     toast('Key deleted', 'error'); renderKeys();
 }
 
+
+// ===== FILES / CDN =====
+function renderFiles() {
+    const files = DB.get('files', {
+        cheat_url: '',
+        driver_url: '',
+        mapper_url: '',
+        cheat_version: '1.0',
+        last_updated: null
+    });
+    
+    main.innerHTML = `
+    <div class="topbar"><h2>Files / CDN</h2><div class="user-badge">Cloud Storage</div></div>
+    <div class="content"><div class="page active">
+        <div class="card">
+            <div class="card-head"><h3>☁ File URLs (CDN)</h3></div>
+            <div class="card-body">
+                <p style="font-size:12px;color:var(--muted);margin-bottom:20px">
+                    Загрузи скомпилированные файлы в GitHub Releases (приватный репо) или любой файлхостинг.<br>
+                    Вставь прямые ссылки ниже. Loader будет скачивать отсюда.
+                </p>
+                <div class="form-group">
+                    <label>Cheat (reader.exe) URL</label>
+                    <input class="input" id="fCheatUrl" value="${files.cheat_url || ''}" placeholder="https://github.com/USER/REPO/releases/download/v1/reader.exe" style="width:100%">
+                </div>
+                <div class="form-group">
+                    <label>Driver (driver.sys) URL</label>
+                    <input class="input" id="fDriverUrl" value="${files.driver_url || ''}" placeholder="https://github.com/USER/REPO/releases/download/v1/driver.sys" style="width:100%">
+                </div>
+                <div class="form-group">
+                    <label>Mapper (kdmapper.exe) URL</label>
+                    <input class="input" id="fMapperUrl" value="${files.mapper_url || ''}" placeholder="https://github.com/USER/REPO/releases/download/v1/mapper.exe" style="width:100%">
+                </div>
+                <div class="form-group">
+                    <label>Current Version</label>
+                    <input class="input" id="fVersion" value="${files.cheat_version || '1.0'}" placeholder="1.0" style="width:200px">
+                </div>
+                <button class="btn btn-primary" onclick="saveFiles()">Save URLs</button>
+                ${files.last_updated ? `<span style="margin-left:16px;font-size:11px;color:var(--muted)">Last saved: ${fmtDate(files.last_updated)}</span>` : ''}
+            </div>
+        </div>
+        
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-head"><h3>📋 Как загрузить файлы</h3></div>
+                <div class="card-body" style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.8">
+                    <strong style="color:var(--accent)">GitHub Releases (рекомендуется):</strong><br>
+                    1. Создай приватный репо на GitHub<br>
+                    2. Зайди в Releases → Create new release<br>
+                    3. Загрузи reader.exe, driver.sys, mapper.exe<br>
+                    4. Скопируй прямые ссылки на файлы<br>
+                    5. Вставь URL сюда<br><br>
+                    <strong style="color:var(--accent)">Формат ссылки GitHub Release:</strong><br>
+                    <code style="font-size:11px;color:var(--accent);background:rgba(0,229,255,.05);padding:4px 8px;border-radius:4px">
+                    https://github.com/USER/REPO/releases/download/TAG/file.exe
+                    </code><br><br>
+                    <strong style="color:var(--warning)">Важно:</strong> Для приватных репо нужен token.<br>
+                    Или используй публичный репо с непонятным именем.
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-head"><h3>🔗 Loader Config</h3></div>
+                <div class="card-body" style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.8">
+                    <strong style="color:var(--accent)">PowerShell Loader (loader_v3.ps1):</strong><br><br>
+                    Обнови переменные в loader_v3.ps1:<br><br>
+                    <code style="font-size:11px;display:block;background:rgba(255,255,255,.03);padding:12px;border-radius:6px;border:1px solid var(--border);white-space:pre;font-family:'JetBrains Mono',monospace">$CFG_CDN_CHT = '${files.cheat_url || "URL_ЧИТА"}'
+$CFG_CDN_DRV = '${files.driver_url || "URL_ДРАЙВЕРА"}'
+$CFG_CDN_MAP = '${files.mapper_url || "URL_МАППЕРА"}'</code>
+                    <br><br>
+                    <strong style="color:var(--accent)">Или Base64:</strong><br>
+                    <button class="btn btn-sm btn-ghost" onclick="genLoaderConfig()" style="margin-top:6px">Сгенерировать конфиг</button>
+                    <pre id="loaderConfigOutput" style="margin-top:10px;font-size:10px;background:rgba(255,255,255,.03);padding:10px;border-radius:6px;display:none;overflow-x:auto;border:1px solid var(--border)"></pre>
+                </div>
+            </div>
+        </div>
+    </div></div>`;
+}
+
+function saveFiles() {
+    const files = {
+        cheat_url: document.getElementById('fCheatUrl').value.trim(),
+        driver_url: document.getElementById('fDriverUrl').value.trim(),
+        mapper_url: document.getElementById('fMapperUrl').value.trim(),
+        cheat_version: document.getElementById('fVersion').value.trim() || '1.0',
+        last_updated: new Date().toISOString()
+    };
+    DB.set('files', files);
+    addLog('system', `CDN URLs updated (v${files.cheat_version})`);
+    toast('Files config saved');
+    renderFiles();
+}
+
+function genLoaderConfig() {
+    const files = DB.get('files', {});
+    const chtB64 = btoa(files.cheat_url || '');
+    const drvB64 = btoa(files.driver_url || '');
+    const mapB64 = btoa(files.mapper_url || '');
+    
+    const config = `# Вставь в loader_v3.ps1 (замени пустые строки)
+$CFG_CDN_CHT = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${chtB64}'))
+$CFG_CDN_DRV = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${drvB64}'))
+$CFG_CDN_MAP = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${mapB64}'))`;
+    
+    const el = document.getElementById('loaderConfigOutput');
+    el.textContent = config;
+    el.style.display = 'block';
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(config).then(() => toast('Copied to clipboard'));
+}
 
 // ===== USERS =====
 function renderUsers() {
