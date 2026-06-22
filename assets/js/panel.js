@@ -1,6 +1,6 @@
 // ===== CONFIG =====
 const CONFIG = {
-    API_URL: 'https://darkware-api.vercel.app/api',
+    API_URL: 'https://darkware-api.darkware.workers.dev/api',
     MODE: 'cloud'
 };
 
