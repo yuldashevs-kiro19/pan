@@ -64,11 +64,9 @@ body{font-family:'Inter',sans-serif;background:#07070b;color:#fff;min-height:100
 </div>
 
 <script>
-const ADMIN_USER = 'admin';
-const DEFAULT_PASS = 'admin123';
 const API_URL = 'https://darkware-api.darkware.workers.dev/api';
 
-if(localStorage.getItem('dw_auth') === 'true') {
+if(localStorage.getItem('dw_auth') === 'true' && localStorage.getItem('dw_token')) {
     window.location.href = 'index.html';
 }
 
@@ -77,37 +75,23 @@ document.getElementById('form').addEventListener('submit', async function(e) {
     const u = document.getElementById('user').value;
     const p = document.getElementById('pass').value;
 
-    // Try cloud auth first if API is configured
-    if(API_URL) {
-        try {
-            const res = await fetch(API_URL + '/auth', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: u, password: p })
-            });
-            const data = await res.json();
-            if(res.ok && data.token) {
-                localStorage.setItem('dw_auth', 'true');
-                localStorage.setItem('dw_user', u);
-                localStorage.setItem('dw_token', data.token);
-                window.location.href = 'index.html';
-                return;
-            }
-            showErr(data.error || 'Auth failed');
+    try {
+        const res = await fetch(API_URL + '/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+        if(res.ok && data.token) {
+            localStorage.setItem('dw_auth', 'true');
+            localStorage.setItem('dw_user', u);
+            localStorage.setItem('dw_token', data.token);
+            window.location.href = 'index.html';
             return;
-        } catch(e) {
-            // Fall through to local auth
         }
-    }
-
-    // Local auth
-    const storedPass = localStorage.getItem('dw_pass') || DEFAULT_PASS;
-    if(u === ADMIN_USER && p === storedPass) {
-        localStorage.setItem('dw_auth', 'true');
-        localStorage.setItem('dw_user', u);
-        window.location.href = 'index.html';
-    } else {
-        showErr('Invalid credentials');
+        showErr(data.error || 'Auth failed');
+    } catch(e) {
+        showErr('Cannot connect to API: ' + e.message);
     }
 });
 
