@@ -1,12 +1,8 @@
 // ===== CONFIG =====
 const CONFIG = {
-    // API URL - change this to your Vercel deployment URL
-    API_URL: '', // Leave empty for localStorage mode, set to 'https://your-app.vercel.app/api' for cloud mode
-    MODE: 'local' // 'local' = localStorage, 'cloud' = API
+    API_URL: 'https://darkware-api.vercel.app/api',
+    MODE: 'cloud'
 };
-
-// Auto-detect mode
-if(CONFIG.API_URL) CONFIG.MODE = 'cloud';
 
 // Auth check
 if(localStorage.getItem('dw_auth') !== 'true') {
